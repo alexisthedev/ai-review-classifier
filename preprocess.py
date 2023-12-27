@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from sklearn.feature_extraction.text import CountVectorizer
 import time
 
 POSITIVE: int = 1
@@ -15,6 +16,7 @@ class Preprocess:
 
     def __init__(self, vocabulary_path: str) -> None:
         self.vocabulary = self.extract_vocabulary(vocabulary_path)
+        self.vectorizer = CountVectorizer(vocabulary=self.vocabulary, binary=True)
 
     def extract_vocabulary(self, vocabulary_path: str) -> dict[str, int]:
         '''
@@ -24,18 +26,6 @@ class Preprocess:
         vocabulary = pd.read_fwf(vocabulary_path, skiprows=self.N, skipfooter=self.K, names=['vocab'])
         self.M = vocabulary.size
         return dict(zip(vocabulary.vocab, range(self.M)))
-
-    def preprocess_review(self, review_path: str) -> list[int]:
-        '''
-        Parses review txt file and creates binary vector.
-        '''
-        review = pd.read_fwf(review_path, names=['review'])
-        review_words = list(review.iloc[0].name)
-        vector = [0]*self.M
-        for word in review_words:
-            if word in self.vocabulary:
-                vector[self.vocabulary.get(word)] = 1
-        return vector
 
     def preprocess_reviews(self, pos_path='', neg_path='') -> list[tuple[list, int]]:
         '''
@@ -47,8 +37,9 @@ class Preprocess:
         res = []
         path = f'{TRAINING_REVIEW_PATH}{pos_path}' if pos_path else f'{TRAINING_REVIEW_PATH}{neg_path}'
         reviews = Path(path).glob('*.txt')
-        for review in reviews:
-            vector = self.preprocess_review(review)
+        for review_path in reviews:
+            with open(review_path, encoding='utf8') as review:
+                vector = self.vectorizer.transform(review)
             outcome = POSITIVE * (len(pos_path) != 0)
             res.append((vector, outcome))
         return res

@@ -1,0 +1,7 @@
+__pycache__
+
+# Dataset
+aclImdb/
+
+notes.txt
+train.py

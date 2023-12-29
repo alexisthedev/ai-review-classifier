@@ -14,7 +14,7 @@ class LogisticRegression:
 
     def fit(self, x_train, y_train):
         n_data, n_features = x_train.shape
-        self.weights = np.random.random([n_features]) # start with random weights
+        self.weights = np.random.randn(n_features) # start with random weights
 
         for epoch in range(self.epochs):
             # Shuffle training examples

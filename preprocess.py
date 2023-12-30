@@ -36,18 +36,18 @@ class Preprocess:
         (x_train_imdb, y_train_imdb), (x_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data()
 
         word_index = tf.keras.datasets.imdb.get_word_index()  # dict {word : index}
-        index2word = dict(
+        index_to_word = dict(
             (i + 3, word) for (word, i) in word_index.items()
         )  # dict {index : word}
         # Add keywords
-        index2word[0] = "[pad]"
-        index2word[1] = "[bos]"
-        index2word[2] = "[oov]"
+        index_to_word[0] = "[pad]"
+        index_to_word[1] = "[bos]"
+        index_to_word[2] = "[oov]"
         x_train_imdb = np.array(
-            [" ".join([index2word[idx] for idx in text]) for text in x_train_imdb]
+            [" ".join([index_to_word[idx] for idx in text]) for text in x_train_imdb]
         )  # get string from indices
         x_test_imdb = np.array(
-            [" ".join([index2word[idx] for idx in text]) for text in x_test_imdb]
+            [" ".join([index_to_word[idx] for idx in text]) for text in x_test_imdb]
         )  # get string from indices
 
         # Create vectors

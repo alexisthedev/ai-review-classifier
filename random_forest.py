@@ -5,7 +5,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.feature_extraction.text import CountVectorizer
 import time
 
-VOCABULARY_PATH: str = "C:/Users/serko/Desktop/sxoli/5ο εξαμηνο/τεχνητη νοημοσινη/aclImdb/imdb.vocab"
+VOCABULARY_PATH: str = (
+    "C:/Users/serko/Desktop/sxoli/5ο εξαμηνο/τεχνητη νοημοσινη/aclImdb/imdb.vocab"
+)
+
 
 class RandomForest:
     def __init__(self, num_trees):
@@ -25,13 +28,23 @@ class RandomForest:
 
     def predict(self, X):
         predictions = [tree.predict(X) for tree in self.trees]
-        ensemble_predictions = np.round(np.mean(predictions, axis=0)) # Aggregate predictions by majority voting
+        ensemble_predictions = np.round(
+            np.mean(predictions, axis=0)
+        )  # Aggregate predictions by majority voting
         return np.round(ensemble_predictions)
+
 
 def main():
     start_time = time.time()
     preprocess = Preprocess(VOCABULARY_PATH)
-    x_train_imdb_binary, y_train_imdb, x_dev, y_dev, x_test_imdb_binary, y_test_imdb = preprocess.preprocess_reviews()
+    (
+        x_train_imdb_binary,
+        y_train_imdb,
+        x_dev,
+        y_dev,
+        x_test_imdb_binary,
+        y_test_imdb,
+    ) = preprocess.preprocess_reviews()
 
     random_forest = RandomForest(num_trees=10)
     random_forest.train(x_train_imdb_binary, y_train_imdb)
@@ -47,5 +60,6 @@ def main():
     runtime = end_time - start_time
     print(f"Total runtime: {runtime} seconds")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

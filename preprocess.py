@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-# from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 
 POSITIVE: int = 1
@@ -51,26 +51,33 @@ class Preprocess:
         )  # get string from indices
 
         # Create vectors
-        x_train_imdb_binary = self.vectorizer.transform(x_train_imdb)
-        x_test_imdb_binary = self.vectorizer.transform(x_test_imdb)
+        x_train_imdb_binary = self.vectorizer.transform(x_train_imdb).toarray()
+        x_test_imdb_binary = self.vectorizer.transform(x_test_imdb).toarray()
+
+        # Split test data to dev and test datasets
+        x_dev, x_test, y_dev, y_test = train_test_split(x_test_imdb_binary, y_test_imdb, test_size=6250, random_state=42)
 
         return (
-            x_train_imdb_binary.toarray(),
+            x_train_imdb_binary,
             y_train_imdb,
-            x_test_imdb_binary.toarray(),
-            y_test_imdb,
+            x_dev,
+            y_dev,
+            x_test,
+            y_test
         )
 
 
 def main():
     preprocess = Preprocess(VOCABULARY_PATH)
     (
-        x_train_imdb_binary,
-        y_train_imdb,
-        x_test_imdb_binary,
-        y_test_imdb,
+        x_train,
+        y_train,
+        x_dev,
+        y_dev,
+        x_test,
+        y_test
     ) = preprocess.preprocess_reviews()
-    # print(np.array(x_test_imdb_binary[0]))
+    # print(np.array(x_test[0]))
 
 
 if __name__ == "__main__":

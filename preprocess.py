@@ -7,8 +7,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 POSITIVE: int = 1
 NEGATIVE: int = 0
-VOCABULARY_PATH: str = "C:/Users/serko/Desktop/sxoli/5ο εξαμηνο/τεχνητη νοημοσινη/aclImdb/imdb.vocab"
-TRAINING_REVIEW_PATH: str = "C:/Users/serko/Desktop/sxoli/5ο εξαμηνο/τεχνητη νοημοσινη/aclImdb/train/"
+VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
+TRAINING_REVIEW_PATH: str = "aclImdb/train/"
 
 
 class Preprocess:
@@ -63,7 +63,7 @@ class Preprocess:
             x_dev,
             y_dev,
             x_test,
-            y_test,
+            y_test
         )
 
 
@@ -75,7 +75,7 @@ def main():
         x_dev,
         y_dev,
         x_test,
-        y_test,
+        y_test
     ) = preprocess.preprocess_reviews()
     # print(np.array(x_test[0]))
 

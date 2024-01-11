@@ -7,11 +7,12 @@ from preprocess import Preprocess
 from sklearn.utils import shuffle
 from sklearn.metrics import log_loss
 
+DEBUG: bool = False
 VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
 
 
 class LogisticRegression:
-    def __init__(self, h=0.001, l=0.01, epochs=1000):
+    def __init__(self, h=0.0001, l=0.01, epochs=700):
         self.h = h
         self.l = l
         self.epochs = epochs
@@ -19,23 +20,53 @@ class LogisticRegression:
         self.weights = None  # weights vector
 
     def _sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
+        if x < 0:
+            return np.exp(x) / (1 + np.exp(x))
+        return 1.0 / (1.0 + np.exp(-x))
 
-    def fit(self, x_train, y_train):
-        n_data, n_features = x_train.shape
-        self.weights = np.random.randn(n_features)  # start with random weights
+    def fit(self, X, y):
+        n_data, n_features = X.shape
+        self.weights = np.random.randn(n_features).astype(
+            np.float64
+        )  # start with random weights
 
         for epoch in range(self.epochs):
+            if DEBUG:
+                total_loss = 0
+                print(epoch)
+
             # Shuffle training examples
-            x_train, y_train = shuffle(x_train, y_train, random_state=epoch)
+            X, y = shuffle(X, y, random_state=epoch)
             for i in range(n_data):
                 # Compute prediction and loss for
                 # current training example
-                prediction = self._sigmoid(np.dot(self.weights, x_train[i]))
-                gradient = (y_train[i] - prediction) * x_train[i]
-                # regularization = np.sum(self.weights**2)
+                prediction = self._sigmoid(np.dot(self.weights, X[i]))
+                error = y[i] - prediction
+                gradient = error * X[i]
 
-                self.weights += self.h * gradient
+                # Calculate regularization
+                regularization = np.sum(self.weights ** 2)
+                regularization = np.clip(regularization, -1e-4, 1e-4)
+
+                # Calculate weight update
+                # based on gradient
+                # and regularization
+                weight_update = (self.h * gradient) - (self.l * regularization)
+                self.weights += weight_update
+
+                if DEBUG:
+                    # Add loss for monitoring
+                    total_loss += error**2
+
+                if np.isnan(np.sum(self.weights)):
+                    print("NaN values detected during training.")
+                    print(f"epoch {epoch} i {i}")
+                    return
+
+            if DEBUG:
+                # Print average loss for monitoring
+                average_loss = total_loss / n_data
+                print(f"Epoch {epoch}, Average Loss: {average_loss}")
 
     def predict(self, x):
         predicted_classes = []
@@ -59,7 +90,7 @@ def main():
 
     # Calculate accuracy in dev data
     # in order to determine hyperparameters
-    lg = LogisticRegression(h=0.0001, l=0.001, epochs=1000)
+    lg = LogisticRegression(h=0.0001, l=0.01, epochs=700)
     train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
 
     start = time.time()

@@ -6,7 +6,7 @@ class DecisionTree:
         self.max_depth = max_depth
         self.tree = None
 
-    def train(self, X, y, depth=0):
+    def fit(self, X, y, depth=0) -> dict[str, np.ndarray or int or float]:
         # ID3 training recursive function
         if depth == self.max_depth or len(set(y)) == 1:
             self.tree = {"label": np.argmax(np.bincount(y))}
@@ -24,11 +24,13 @@ class DecisionTree:
                 gini = self.calculate_gini(y[left_indices], y[right_indices])
 
                 if gini < best_gini:
+                    # Update if a better split is found
                     best_gini = gini
                     best_feature = feature_index
                     best_threshold = value
 
         if best_gini == float("inf"):
+            # If the best gini is still infinity, create a leaf node with the majority label
             self.tree = {"label": max(set(y), key=y.count)}
             return self.tree
 
@@ -36,8 +38,8 @@ class DecisionTree:
         right_indices = ~left_indices
 
         # Recursively build the left and right subtrees
-        left_subtree = self.train(X[left_indices], y[left_indices], depth + 1)
-        right_subtree = self.train(X[right_indices], y[right_indices], depth + 1)
+        left_subtree = self.fit(X[left_indices], y[left_indices], depth + 1)
+        right_subtree = self.fit(X[right_indices], y[right_indices], depth + 1)
 
         # Create a node representing the best split
         self.tree = {
@@ -48,13 +50,13 @@ class DecisionTree:
         }
         return self.tree
 
-    def predict(self, X):
+    def predict(self, X) -> np.ndarray:
         predictions = np.zeros(len(X))
         for i in range(len(X)):
             predictions[i] = self._predict_single(X[i], self.tree)
         return predictions
 
-    def _predict_single(self, example, node):
+    def _predict_single(self, example, node) -> int:
         # ID3 prediction recursive function
         if "label" in node:
             # Reached a leaf node, return the label
@@ -70,7 +72,7 @@ class DecisionTree:
         else:
             return self._predict_single(example, node["right"])
 
-    def calculate_gini(self, left_labels, right_labels):
+    def calculate_gini(self, left_labels, right_labels) -> float:
         total_samples = len(left_labels) + len(right_labels)
         gini_left = 1.0 - sum(
             (np.sum(left_labels == label) / len(left_labels)) ** 2

@@ -17,8 +17,8 @@ class Preprocess:
     K: int = 88500  # Number of least common words to ignore
     M: int = 0
 
-    def __init__(self, vocabulary_path: str) -> None:
-        self.vocabulary = self.extract_vocabulary(vocabulary_path)
+    def __init__(self) -> None:
+        self.vocabulary = self.extract_vocabulary(VOCABULARY_PATH)
         self.vectorizer = CountVectorizer(vocabulary=self.vocabulary, binary=True)
 
     def extract_vocabulary(self, vocabulary_path: str) -> dict[str, int]:
@@ -68,7 +68,7 @@ class Preprocess:
 
 
 def main():
-    preprocess = Preprocess(VOCABULARY_PATH)
+    preprocess = Preprocess()
     (
         x_train,
         y_train,

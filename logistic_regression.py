@@ -12,7 +12,7 @@ VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
 
 
 class LogisticRegression:
-    def __init__(self, h=0.0001, l=0.01, epochs=700):
+    def __init__(self, h=0.0001, l=0.001, epochs=600):
         self.h = h
         self.l = l
         self.epochs = epochs
@@ -90,7 +90,7 @@ def main():
 
     # Calculate accuracy in dev data
     # in order to determine hyperparameters
-    lg = LogisticRegression(h=0.0001, l=0.01, epochs=700)
+    lg = LogisticRegression(h=0.0001, l=0.001, epochs=600)
     train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
 
     start = time.time()

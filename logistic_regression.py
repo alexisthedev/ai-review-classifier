@@ -4,7 +4,6 @@ from development import Development
 from sklearn.utils import shuffle
 
 DEBUG: bool = False
-VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
 
 
 class LogisticRegression:

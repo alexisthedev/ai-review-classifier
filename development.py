@@ -18,11 +18,24 @@ class Development:
             self.y_test,
         ) = preprocess.preprocess_reviews()
 
-    def calculate(self, classifier):
+    def _plot_learning_curve(
+        self, train_sizes: list, train_loss: list, dev_loss: list
+    ) -> None:
+        plt.plot(train_sizes, train_loss, color="r", label="Training Set")
+        plt.plot(train_sizes, dev_loss, color="g", label="Dev Set")
+
+        plt.title("Learning Curve")
+        plt.xlabel("Training Set Size")
+        plt.ylabel("Cross-entropy loss")
+        plt.legend(loc="best")
+        plt.tight_layout()
+        plt.show()
+
+    def calculate(self, classifier: object) -> None:
         """
         Calculate cross-entropy loss
         in train and dev data, for various training sizes,
-        in order to determine hyperparameters
+        in order to determine hyperparameters.
         """
         train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
 
@@ -62,14 +75,3 @@ class Development:
         print(f"\nTotal runtime: {round(end - start, 3)} seconds.")
 
         self._plot_learning_curve(train_sizes, train_loss_scores, dev_loss_scores)
-
-    def _plot_learning_curve(self, train_sizes, train_loss, dev_loss):
-        plt.plot(train_sizes, train_loss, color="r", label="Training Set")
-        plt.plot(train_sizes, dev_loss, color="g", label="Dev Set")
-
-        plt.title("Learning Curve")
-        plt.xlabel("Training Set Size")
-        plt.ylabel("Cross-entropy loss")
-        plt.legend(loc="best")
-        plt.tight_layout()
-        plt.show()

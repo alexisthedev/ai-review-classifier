@@ -88,7 +88,7 @@ def main():
         y_test,
     ) = preprocess.preprocess_reviews()
 
-    # Calculate accuracy in dev data
+    # Calculate cross-entropy loss in dev data
     # in order to determine hyperparameters
     lg = LogisticRegression(h=0.0001, l=0.001, epochs=600)
     train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
@@ -126,7 +126,7 @@ def main():
     ]
     table = pd.DataFrame(results, columns=columns)
     print(table)
-    print(f"\nTotal rutime: {round(end - start, 3)} seconds.")
+    print(f"\nTotal runtime: {round(end - start, 3)} seconds.")
 
     _plot_learning_curve(train_sizes, train_loss_scores, dev_loss_scores)
 
@@ -137,7 +137,7 @@ def _plot_learning_curve(train_sizes, train_loss, dev_loss):
 
     plt.title("Learning Curve")
     plt.xlabel("Training Set Size")
-    plt.ylabel("Cross entropy loss")
+    plt.ylabel("Cross-entropy loss")
     plt.legend(loc="best")
     plt.tight_layout()
     plt.show()

@@ -8,12 +8,12 @@ from decision_tree import DecisionTree
 from sklearn.metrics import log_loss
 
 VOCABULARY_PATH: str = (
-    "C:/Users/serko/Desktop/sxoli/5ο εξαμηνο/τεχνητη νοημοσινη/aclImdb/imdb.vocab"
+    "aclImdb/imdb.vocab"
 )
 
 
 class RandomForest:
-    def __init__(self, num_trees, max_depth):
+    def __init__(self, num_trees=11, max_depth=10):
         self.num_trees = num_trees
         self.max_depth = max_depth
         self.trees = []
@@ -50,8 +50,8 @@ def main() -> None:
 
     # Calculate accuracy in dev data
     # in order to determine hyperparameters
-    random_forest = RandomForest(num_trees=11, max_depth=10)
-    train_sizes = [100, 1000, 5000, 10000, 15000, 20000, 25000]
+    random_forest = RandomForest()
+    train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
 
     start = time.time()
     train_loss_scores, dev_loss_scores = [], []

@@ -56,13 +56,13 @@ class Development:
             train_loss = log_loss(y_true=y, y_pred=train_pred)
             train_loss_scores.append(train_loss)
 
-        # Calculate cross-entropy loss
-        # on the dev dataset
-        dev_pred = classifier.predict(self.x_dev)
-        dev_loss = log_loss(y_true=self.y_dev, y_pred=dev_pred)
-        dev_loss_scores.append(dev_loss)
+            # Calculate cross-entropy loss
+            # on the dev dataset
+            dev_pred = classifier.predict(self.x_dev)
+            dev_loss = log_loss(y_true=self.y_dev, y_pred=dev_pred)
+            dev_loss_scores.append(dev_loss)
 
-        results.append([train_size, round(train_loss, 2), round(dev_loss, 2)])
+            results.append([train_size, round(train_loss, 2), round(dev_loss, 2)])
         end = time.time()
 
         columns = [

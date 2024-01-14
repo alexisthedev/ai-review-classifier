@@ -7,7 +7,7 @@ DEBUG: bool = False
 
 
 class LogisticRegression:
-    def __init__(self, h=0.0001, l=0.001, epochs=600):
+    def __init__(self, h=0.0001, l=0.001, epochs=800):
         self.h = h
         self.l = l
         self.epochs = epochs
@@ -21,9 +21,7 @@ class LogisticRegression:
 
     def fit(self, X, y):
         n_data, n_features = X.shape
-        self.weights = np.random.randn(n_features).astype(
-            np.float64
-        )  # start with random weights
+        self.weights = np.random.randn(n_features) # start with random weights
 
         for epoch in range(self.epochs):
             if DEBUG:
@@ -33,20 +31,19 @@ class LogisticRegression:
             # Shuffle training examples
             X, y = shuffle(X, y, random_state=epoch)
             for i in range(n_data):
-                # Compute prediction and loss for
-                # current training example
+                # Compute prediction and gradient loss
+                # for current training example
                 prediction = self._sigmoid(np.dot(self.weights, X[i]))
                 error = y[i] - prediction
-                gradient = error * X[i]
+                gradient_loss = error * X[i]
 
-                # Calculate regularization
-                regularization = np.sum(self.weights**2)
-                regularization = np.clip(regularization, -1e-4, 1e-4)
+                # Calculate gradient for L2 regularization
+                gradient_regularization = 2 * self.l * self.weights
 
                 # Calculate weight update
-                # based on gradient
-                # and regularization
-                weight_update = (self.h * gradient) - (self.l * regularization)
+                # based on gradient loss
+                # and gradient regularization
+                weight_update = self.h * (gradient_loss - gradient_regularization)
                 self.weights += weight_update
 
                 if DEBUG:
@@ -75,7 +72,7 @@ class LogisticRegression:
 def main():
     development = Development()
 
-    development.calculate(LogisticRegression())
+    development.calculate(LogisticRegression(h=0.0001, l=0.001, epochs=800))
 
 
 if __name__ == "__main__":

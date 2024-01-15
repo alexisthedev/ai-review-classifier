@@ -77,7 +77,6 @@ def main():
         x_test,
         y_test
     ) = preprocess.preprocess_reviews()
-    # print(np.array(x_test[0]))
 
 
 if __name__ == "__main__":

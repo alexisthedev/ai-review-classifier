@@ -5,16 +5,19 @@ from preprocess import Preprocess
 from logistic_regression import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
+TRAIN_SIZES: list = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
+
 
 class Testing:
-    def __init__(self):
+    def __init__(self, train_sizes: list = TRAIN_SIZES):
+        self.train_sizes = train_sizes
         preprocess = Preprocess()
         (
-            self.x_train,
+            self.X_train,
             self.y_train,
-            self.x_dev,
+            self.X_dev,
             self.y_dev,
-            self.x_test,
+            self.X_test,
             self.y_test,
         ) = preprocess.preprocess_reviews()
 
@@ -43,23 +46,28 @@ class Testing:
         plt.tight_layout()
         plt.show()
 
-    def create_learning_curve(self, classifier: object) -> None:
+    def evaluate_classifier(self, classifier: object) -> None:
         """
         Creating learning curves for accuracy, precision, recall and f1 score
         in train and test data, for various training sizes,
         in order to review the classifier.
         """
-        train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
-
         train_accuracy_scores, test_accuracy_scores = [], []
         train_precision_scores, test_precision_scores = [], []
         train_recall_scores, test_recall_scores = [], []
         train_f1_scores, test_f1_scores = [], []
         accuracy_results, precision_results, recall_results, f1_results = [], [], [], []
 
-        for train_size in train_sizes:
-            X = self.x_train[:train_size]
+        valid_train_sizes = []
+        for train_size in self.train_sizes:
+            # Check that train_size is in bounds
+            if train_size >= len(self.X_train):
+                continue
+
+            valid_train_sizes.append(train_size)
+            X = self.X_train[:train_size]
             y = self.y_train[:train_size]
+
             # Fit algorithm with a test dataset
             # the size of train_size
             classifier.fit(X, y)
@@ -80,7 +88,7 @@ class Testing:
 
             # Calculate metrics
             # on the testing dataset
-            test_pred = classifier.predict(self.x_test)
+            test_pred = classifier.predict(self.X_test)
             test_accuracy = accuracy_score(y_true=self.y_test, y_pred=test_pred)
             test_accuracy_scores.append(test_accuracy)
             test_precision = precision_score(y_true=self.y_test, y_pred=test_pred)
@@ -110,7 +118,7 @@ class Testing:
 
         # Plot accuracy
         self._plot(
-            train_sizes,
+            valid_train_sizes,
             train_accuracy_scores,
             test_accuracy_scores,
             ylabel="Accuracy Score",
@@ -119,7 +127,7 @@ class Testing:
         )
         # Plot precision
         self._plot(
-            train_sizes,
+            valid_train_sizes,
             train_precision_scores,
             test_precision_scores,
             ylabel="Precision Score",
@@ -128,7 +136,7 @@ class Testing:
         )
         # Plot recall
         self._plot(
-            train_sizes,
+            valid_train_sizes,
             train_recall_scores,
             test_recall_scores,
             ylabel="Recall Score",
@@ -137,7 +145,7 @@ class Testing:
         )
         # Plot F1 score
         self._plot(
-            train_sizes,
+            valid_train_sizes,
             train_f1_scores,
             test_f1_scores,
             ylabel="F1 Score",
@@ -150,7 +158,7 @@ def main():
     testing = Testing()
 
     print("Logistic Regression:")
-    testing.create_learning_curve(LogisticRegression())
+    testing.evaluate_classifier(LogisticRegression())
 
 
 if __name__ == "__main__":

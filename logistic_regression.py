@@ -21,7 +21,7 @@ class LogisticRegression:
 
     def fit(self, X, y):
         n_data, n_features = X.shape
-        self.weights = np.random.randn(n_features) # start with random weights
+        self.weights = np.random.randn(n_features)  # start with random weights
 
         for epoch in range(self.epochs):
             if DEBUG:
@@ -40,8 +40,7 @@ class LogisticRegression:
                 # Calculate gradient for L2 regularization
                 gradient_regularization = 2 * self.l * self.weights
 
-                # Calculate weight update
-                # based on gradient loss
+                # Calculate weight update based on gradient loss
                 # and gradient regularization
                 weight_update = self.h * (gradient_loss - gradient_regularization)
                 self.weights += weight_update
@@ -72,7 +71,7 @@ class LogisticRegression:
 def main():
     development = Development()
 
-    development.calculate(LogisticRegression(h=0.0001, l=0.001, epochs=800))
+    development.evaluate_classifier(LogisticRegression(h=0.0001, l=0.001, epochs=800))
 
 
 if __name__ == "__main__":

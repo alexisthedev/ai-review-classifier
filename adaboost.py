@@ -10,7 +10,7 @@ from preprocess import Preprocess
 VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
 
 class AdaBoost:
-    def __init__(self, num_learners=100):
+    def __init__(self, num_learners=800):
         self.num_learners = num_learners
         self.learner_weights = []
         self.learners = []
@@ -69,7 +69,7 @@ def main():
 
     # Calculate cross-entropy loss in dev data
     # in order to determine hyperparameters
-    adaboost = AdaBoost(750)
+    adaboost = AdaBoost(800)
     train_sizes = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
 
     start = time.time()

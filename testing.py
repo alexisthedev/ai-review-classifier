@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from preprocess import Preprocess
 from logistic_regression import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 TRAIN_SIZES: list = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
@@ -159,6 +160,16 @@ def main():
 
     print("Logistic Regression:")
     testing.evaluate_classifier(LogisticRegression())
+    testing.evaluate_classifier(
+        SGDClassifier(
+            loss="log_loss",
+            learning_rate="constant",
+            eta0=0.0001,
+            penalty="l2",
+            alpha=0.001,
+            max_iter=800,
+        )
+    )
 
 
 if __name__ == "__main__":

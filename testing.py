@@ -62,7 +62,7 @@ class Testing:
         valid_train_sizes = []
         for train_size in self.train_sizes:
             # Check that train_size is in bounds
-            if train_size >= len(self.X_train):
+            if train_size > len(self.X_train):
                 continue
 
             valid_train_sizes.append(train_size)

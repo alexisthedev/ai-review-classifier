@@ -2,6 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from preprocess import Preprocess
+from random_forest import RandomForest
+from sklearn.ensemble import RandomForestClassifier
+from adaboost import AdaBoost
+from sklearn.ensemble import AdaBoostClassifier
 from logistic_regression import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -157,6 +161,14 @@ class Testing:
 
 def main():
     testing = Testing()
+
+    print("Random Forest:")
+    testing.evaluate_classifier(RandomForest())
+    testing.evaluate_classifier(RandomForestClassifier(n_estimators=11, max_depth=10))
+
+    print("AdaBoost:")
+    testing.evaluate_classifier(AdaBoost())
+    testing.evaluate_classifier(AdaBoostClassifier(n_estimators=800))
 
     print("Logistic Regression:")
     testing.evaluate_classifier(LogisticRegression())

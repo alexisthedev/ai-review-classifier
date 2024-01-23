@@ -6,7 +6,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 
 VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
-TRAINING_REVIEW_PATH: str = "aclImdb/train/"
 
 
 class Preprocess:

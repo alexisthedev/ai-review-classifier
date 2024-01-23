@@ -5,8 +5,6 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 
-POSITIVE: int = 1
-NEGATIVE: int = 0
 VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
 TRAINING_REVIEW_PATH: str = "aclImdb/train/"
 
@@ -17,7 +15,7 @@ class Preprocess:
     K: int = 88500  # Number of least common words to ignore
     M: int = 0
 
-    def __init__(self, vocabulary_path: str) -> None:
+    def __init__(self, vocabulary_path=VOCABULARY_PATH) -> None:
         self.vocabulary = self.extract_vocabulary(vocabulary_path)
         self.vectorizer = CountVectorizer(vocabulary=self.vocabulary, binary=True)
 
@@ -33,7 +31,7 @@ class Preprocess:
         return dict(zip(vocabulary.vocab, range(self.M)))
 
     def preprocess_reviews(self):
-        (x_train_imdb, y_train_imdb), (x_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data()
+        (X_train_imdb, y_train_imdb), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data()
 
         word_index = tf.keras.datasets.imdb.get_word_index()  # dict {word : index}
         index_to_word = dict(
@@ -43,38 +41,33 @@ class Preprocess:
         index_to_word[0] = "[pad]"
         index_to_word[1] = "[bos]"
         index_to_word[2] = "[oov]"
-        x_train_imdb = np.array(
-            [" ".join([index_to_word[idx] for idx in text]) for text in x_train_imdb]
+        X_train_imdb = np.array(
+            [" ".join([index_to_word[idx] for idx in text]) for text in X_train_imdb]
         )  # get string from indices
-        x_test_imdb = np.array(
-            [" ".join([index_to_word[idx] for idx in text]) for text in x_test_imdb]
+        X_test_imdb = np.array(
+            [" ".join([index_to_word[idx] for idx in text]) for text in X_test_imdb]
         )  # get string from indices
 
         # Create vectors
-        x_train_imdb_binary = self.vectorizer.transform(x_train_imdb).toarray()
-        x_test_imdb_binary = self.vectorizer.transform(x_test_imdb).toarray()
+        X_train_imdb_binary = self.vectorizer.transform(X_train_imdb).toarray()
+        X_test_imdb_binary = self.vectorizer.transform(X_test_imdb).toarray()
 
         # Split test data to dev and test datasets
-        x_dev, x_test, y_dev, y_test = train_test_split(x_test_imdb_binary, y_test_imdb, test_size=6250, random_state=42)
-
-        return (
-            x_train_imdb_binary,
-            y_train_imdb,
-            x_dev,
-            y_dev,
-            x_test,
-            y_test
+        X_dev, X_test, y_dev, y_test = train_test_split(
+            X_test_imdb_binary, y_test_imdb, test_size=6250, random_state=42
         )
+
+        return (X_train_imdb_binary, y_train_imdb, X_dev, y_dev, X_test, y_test)
 
 
 def main():
-    preprocess = Preprocess(VOCABULARY_PATH)
+    preprocess = Preprocess()
     (
-        x_train,
+        X_train,
         y_train,
-        x_dev,
+        X_dev,
         y_dev,
-        x_test,
+        X_test,
         y_test
     ) = preprocess.preprocess_reviews()
 

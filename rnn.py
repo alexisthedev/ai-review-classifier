@@ -11,8 +11,7 @@ class RNN:
     # Hyperparameters
     # Vocabulary
     N: int = 400  # Number of most common words to ignore
-    K: int = 88500  # Number of least common words to ignore
-    M: int = 0
+    M: int = 627 # Words to use in vocabulary
 
     EMBEDDING_DIM: int = 60
     EPOCHS: int = 10
@@ -20,10 +19,8 @@ class RNN:
     def __init__(self):
         word_index = tf.keras.datasets.imdb.get_word_index() # dict {word : index}
         total_vocabulary_size = len(word_index)
-        self.M = total_vocabulary_size - self.N - self.K
 
-        # TODO add vocabulary restrictions
-        (X_train_imdb, self.y_train), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data()
+        (X_train_imdb, self.y_train), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data(num_words=self.N + self.M, skip_top=self.N)
 
         # Split test data to dev and test datasets
         X_dev_imdb, X_test_imdb, self.y_dev, self.y_test = train_test_split(
@@ -200,7 +197,7 @@ def main():
     rnn.fit(verbose=1)
 
     # Testing
-    rnn.evaluate_classifier()
+    # rnn.evaluate_classifier()
 
 
 if __name__ == "__main__":

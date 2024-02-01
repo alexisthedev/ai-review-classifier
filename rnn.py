@@ -5,21 +5,27 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
+DEVELOPMENT: bool = True
+TESTING: bool = False
 TRAIN_SIZES: list = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
+
 
 class RNN:
     # Hyperparameters
     # Vocabulary
     N: int = 400  # Number of most common words to ignore
-    M: int = 627 # Words to use in vocabulary
+    M: int = 627  # Words to use in vocabulary
 
-    EMBEDDING_DIM: int = 60
+    LSTM_UNITS: int = 32
+    EMBEDDING_DIM: int = 80
     EPOCHS: int = 10
 
     def __init__(self):
-        word_index = tf.keras.datasets.imdb.get_word_index() # dict {word : index}
+        # Import vocabulary
+        word_index = tf.keras.datasets.imdb.get_word_index()  # dict {word : index}
         total_vocabulary_size = len(word_index)
 
+        # Import dataset
         (X_train_imdb, self.y_train), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data(num_words=self.N + self.M, skip_top=self.N)
 
         # Split test data to dev and test datasets
@@ -35,16 +41,31 @@ class RNN:
         temp_X_test = [tf.constant(lst) for lst in X_test_imdb]
         self.X_test = tf.ragged.stack(temp_X_test)
 
+        # Create RNN model
         self.rnn = tf.keras.models.Sequential()
-        self.rnn.add(tf.keras.layers.Embedding(input_dim=total_vocabulary_size + 3, output_dim=self.EMBEDDING_DIM))
-        self.rnn.add(tf.keras.layers.GRU(units=28, activation="tanh", dropout=0.5, recurrent_dropout=0.2, kernel_regularizer=tf.keras.regularizers.l2(0.01)))
-        self.rnn.add(tf.keras.layers.Dense(units=1, activation="sigmoid"))  # binary classification
+        self.rnn.add(
+            tf.keras.layers.Embedding(
+                input_dim=total_vocabulary_size + 3, output_dim=self.EMBEDDING_DIM
+            )
+        )
+        self.rnn.add(
+            tf.keras.layers.LSTM(
+                units=self.LSTM_UNITS,
+                activation="tanh",
+                dropout=0.3,
+                recurrent_dropout=0.3,
+            )
+        )
+        self.rnn.add(
+            tf.keras.layers.Dense(units=1, activation="sigmoid")
+        )  # binary classification
 
-        self.rnn.compile(loss=tf.keras.losses.BinaryCrossentropy(), optimizer=tf.keras.optimizers.legacy.Adam())
+        self.rnn.compile(
+            loss=tf.keras.losses.BinaryCrossentropy(),
+            optimizer=tf.keras.optimizers.legacy.Adam(),
+        )
 
-    def _plot_loss(
-        self, epochs: list, train_loss: list, dev_loss: list
-    ) -> None:
+    def _plot_loss(self, epochs: list, train_loss: list, dev_loss: list) -> None:
         plt.plot(epochs, train_loss, color="r", label="Training Set")
         plt.plot(epochs, dev_loss, color="g", label="Dev Set")
 
@@ -81,123 +102,133 @@ class RNN:
         plt.show()
 
     def fit(self, verbose: int):
-        history = self.rnn.fit(x=self.X_train, y=self.y_train, epochs=self.EPOCHS, validation_data=(self.X_dev, self.y_dev), verbose=verbose)
+        history = self.rnn.fit(
+            x=self.X_train,
+            y=self.y_train,
+            epochs=self.EPOCHS,
+            validation_data=(self.X_dev, self.y_dev),
+            verbose=verbose,
+        )
 
         if verbose == 1:
-            self._plot_loss([x + 1 for x in range(RNN.EPOCHS)], history.history['loss'], history.history['val_loss'])
+            self._plot_loss(
+                [x + 1 for x in range(self.EPOCHS)],
+                history.history["loss"],
+                history.history["val_loss"],
+            )
 
     def evaluate_classifier(self, train_sizes: list = TRAIN_SIZES) -> None:
-            """
-            Creating learning curves for accuracy, precision, recall and f1 score
-            in train and test data, for various training sizes,
-            in order to review the classifier.
-            """
-            classifier = RNN()
+        """
+        Creating learning curves for accuracy, precision, recall and f1 score
+        in train and test data, for various training sizes,
+        in order to review the classifier.
+        """
+        classifier = RNN()
 
-            train_accuracy_scores, test_accuracy_scores = [], []
-            train_precision_scores, test_precision_scores = [], []
-            train_recall_scores, test_recall_scores = [], []
-            train_f1_scores, test_f1_scores = [], []
-            accuracy_results, precision_results, recall_results, f1_results = [], [], [], []
+        train_accuracy_scores, test_accuracy_scores = [], []
+        train_precision_scores, test_precision_scores = [], []
+        train_recall_scores, test_recall_scores = [], []
+        train_f1_scores, test_f1_scores = [], []
+        accuracy_results, precision_results, recall_results, f1_results = [], [], [], []
 
-            for train_size in train_sizes:
-                X = self.X_train[:train_size]
-                y = self.y_train[:train_size]
+        for train_size in train_sizes:
+            X = self.X_train[:train_size]
+            y = self.y_train[:train_size]
 
-                # Fit algorithm with a test dataset
-                # the size of train_size
-                classifier.fit(X, y, verbose=0)
+            # Fit algorithm with a test dataset
+            # the size of train_size
+            classifier.fit(X, y, verbose=0)
 
-                # Calculate metrics
-                # on the training subset used
-                train_pred = classifier.predict(X)
-                train_accuracy = accuracy_score(y_true=y, y_pred=train_pred)
-                train_accuracy_scores.append(train_accuracy)
-                train_precision = precision_score(y_true=y, y_pred=train_pred)
-                train_precision_scores.append(train_precision)
-                train_recall = recall_score(y_true=y, y_pred=train_pred)
-                train_recall_scores.append(train_recall)
-                train_f1 = f1_score(
-                    y_true=y, y_pred=train_pred, pos_label=1, average="binary"
-                )  # Returns the f1 score for the positive category
-                train_f1_scores.append(train_f1)
+            # Calculate metrics
+            # on the training subset used
+            train_pred = classifier.predict(X)
+            train_accuracy = accuracy_score(y_true=y, y_pred=train_pred)
+            train_accuracy_scores.append(train_accuracy)
+            train_precision = precision_score(y_true=y, y_pred=train_pred)
+            train_precision_scores.append(train_precision)
+            train_recall = recall_score(y_true=y, y_pred=train_pred)
+            train_recall_scores.append(train_recall)
+            train_f1 = f1_score(
+                y_true=y, y_pred=train_pred, pos_label=1, average="binary"
+            )  # Returns the f1 score for the positive category
+            train_f1_scores.append(train_f1)
 
-                # Calculate metrics
-                # on the testing dataset
-                test_pred = classifier.predict(self.X_test)
-                test_accuracy = accuracy_score(y_true=self.y_test, y_pred=test_pred)
-                test_accuracy_scores.append(test_accuracy)
-                test_precision = precision_score(y_true=self.y_test, y_pred=test_pred)
-                test_precision_scores.append(test_precision)
-                test_recall = recall_score(y_true=self.y_test, y_pred=test_pred)
-                test_recall_scores.append(test_recall)
-                test_f1 = f1_score(
-                    y_true=self.y_test, y_pred=test_pred, pos_label=1, average="binary"
-                )  # Returns the f1 score for the positive category
-                test_f1_scores.append(test_f1)
+            # Calculate metrics
+            # on the testing dataset
+            test_pred = classifier.predict(self.X_test)
+            test_accuracy = accuracy_score(y_true=self.y_test, y_pred=test_pred)
+            test_accuracy_scores.append(test_accuracy)
+            test_precision = precision_score(y_true=self.y_test, y_pred=test_pred)
+            test_precision_scores.append(test_precision)
+            test_recall = recall_score(y_true=self.y_test, y_pred=test_pred)
+            test_recall_scores.append(test_recall)
+            test_f1 = f1_score(
+                y_true=self.y_test, y_pred=test_pred, pos_label=1, average="binary"
+            )  # Returns the f1 score for the positive category
+            test_f1_scores.append(test_f1)
 
-                accuracy_results.append(
-                    [train_size, round(train_accuracy, 2), round(test_accuracy, 2)]
-                )
-                precision_results.append(
-                    [train_size, round(train_precision, 2), round(test_precision, 2)]
-                )
-                recall_results.append(
-                    [train_size, round(train_recall, 2), round(test_recall, 2)]
-                )
-                f1_results.append([train_size, round(train_f1, 2), round(test_f1, 2)])
-
-            self._print_table("Accuracy", accuracy_results)
-            self._print_table("Precision", precision_results)
-            self._print_table("Recall", recall_results)
-            self._print_table("F1 Score", f1_results)
-
-            # Plot accuracy
-            self._plot_learning_curve(
-                train_sizes,
-                train_accuracy_scores,
-                test_accuracy_scores,
-                ylabel="Accuracy Score",
-                c1="r",
-                c2="g",
+            accuracy_results.append(
+                [train_size, round(train_accuracy, 2), round(test_accuracy, 2)]
             )
-            # Plot precision
-            self._plot_learning_curve(
-                train_sizes,
-                train_precision_scores,
-                test_precision_scores,
-                ylabel="Precision Score",
-                c1="c",
-                c2="m",
+            precision_results.append(
+                [train_size, round(train_precision, 2), round(test_precision, 2)]
             )
-            # Plot recall
-            self._plot_learning_curve(
-                train_sizes,
-                train_recall_scores,
-                test_recall_scores,
-                ylabel="Recall Score",
-                c1="g",
-                c2="y",
+            recall_results.append(
+                [train_size, round(train_recall, 2), round(test_recall, 2)]
             )
-            # Plot F1 score
-            self._plot_learning_curve(
-                train_sizes,
-                train_f1_scores,
-                test_f1_scores,
-                ylabel="F1 Score",
-                c1="b",
-                c2="r",
-            )
+            f1_results.append([train_size, round(train_f1, 2), round(test_f1, 2)])
+
+        self._print_table("Accuracy", accuracy_results)
+        self._print_table("Precision", precision_results)
+        self._print_table("Recall", recall_results)
+        self._print_table("F1 Score", f1_results)
+
+        # Plot accuracy
+        self._plot_learning_curve(
+            train_sizes,
+            train_accuracy_scores,
+            test_accuracy_scores,
+            ylabel="Accuracy Score",
+            c1="r",
+            c2="g",
+        )
+        # Plot precision
+        self._plot_learning_curve(
+            train_sizes,
+            train_precision_scores,
+            test_precision_scores,
+            ylabel="Precision Score",
+            c1="c",
+            c2="m",
+        )
+        # Plot recall
+        self._plot_learning_curve(
+            train_sizes,
+            train_recall_scores,
+            test_recall_scores,
+            ylabel="Recall Score",
+            c1="g",
+            c2="y",
+        )
+        # Plot F1 score
+        self._plot_learning_curve(
+            train_sizes,
+            train_f1_scores,
+            test_f1_scores,
+            ylabel="F1 Score",
+            c1="b",
+            c2="r",
+        )
 
 
 def main():
     rnn = RNN()
 
-    # Development
-    rnn.fit(verbose=1)
+    if DEVELOPMENT:
+        rnn.fit(verbose=1)
 
-    # Testing
-    # rnn.evaluate_classifier()
+    if TESTING:
+        rnn.evaluate_classifier()
 
 
 if __name__ == "__main__":

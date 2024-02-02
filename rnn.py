@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 DEVELOPMENT: bool = True
-TESTING: bool = False
+TESTING: bool = True
 TRAIN_SIZES: list = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
 
 
@@ -18,17 +18,14 @@ class RNN:
     N: int = 400  # Number of most common words to ignore
     M: int = 627  # Words to use in vocabulary
 
-    EMBEDDING_DIM: int = 64
-    LSTM_UNITS: int = 100
-    EPOCHS: int = 10
+    EMBEDDING_DIM: int = 80
+    LSTM_UNITS: int = 200
+    EPOCHS: int = 5
+    BATCHES: int = 32
 
     def __init__(self):
-        # Import vocabulary
-        word_index = tf.keras.datasets.imdb.get_word_index()  # dict {word : index}
-        total_vocabulary_size = len(word_index)
-
         # Import dataset
-        (self.X_train, self.y_train), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data(num_words=self.N + self.M, skip_top=self.N)
+        (self.X_train, self.y_train), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data(skip_top=self.N, num_words=self.M)
 
         # Pad the train and test lists
         max_length = 400
@@ -44,7 +41,7 @@ class RNN:
         self.rnn = tf.keras.models.Sequential()
         self.rnn.add(
             tf.keras.layers.Embedding(
-                input_dim=total_vocabulary_size + 3,
+                input_dim=self.M + 3,
                 output_dim=self.EMBEDDING_DIM,
                 input_length=max_length,
             )
@@ -68,7 +65,7 @@ class RNN:
         plt.plot(epochs, dev_loss, color="g", label="Dev Set")
 
         plt.title("Learning Curve")
-        plt.xlabel("Training Set Size")
+        plt.xlabel("Epoch")
         plt.ylabel("Cross-entropy loss")
         plt.legend(loc="best")
         plt.tight_layout()
@@ -79,6 +76,7 @@ class RNN:
             x=X,
             y=y,
             epochs=self.EPOCHS,
+            batch_size=self.BATCHES,
             validation_data=(self.X_dev, self.y_dev),
             verbose=verbose,
         )
@@ -156,8 +154,6 @@ def evaluate_classifier() -> None:
         # Calculate metrics
         # on the training subset used
         train_pred = classifier.predict(X)
-        print(train_pred)
-        print(train_pred[0])
         train_accuracy = accuracy_score(y_true=y, y_pred=train_pred)
         train_accuracy_scores.append(train_accuracy)
         train_precision = precision_score(y_true=y, y_pred=train_pred)

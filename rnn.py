@@ -22,7 +22,7 @@ class RNN:
     M: int = 0
 
     MAX_LENGTH: int = 250
-    EMBEDDING_DIM: int = 64
+    EMBEDDING_DIM: int = 300
     NUM_LAYERS: int = 1
     GRU_UNITS: int = 64
     EPOCHS: int = 10
@@ -57,7 +57,6 @@ class RNN:
 
         self.rnn = self.create_rnn()
         self.rnn.compile(loss="binary_crossentropy", optimizer="adam")
-        print(self.rnn.summary())
 
     def vectorizer_layer(self) -> object:
         """
@@ -97,14 +96,17 @@ class RNN:
 
         # Embedding layer
         fasttext_model = fasttext.load_model("cc.en.300.bin")
-        embedding_matrix = np.zeros(shape=(len(vectorizer.get_vocabulary()), 300))
+        embedding_matrix = np.zeros(shape=(len(vectorizer.get_vocabulary()), self.EMBEDDING_DIM))
         for i, word in enumerate(vectorizer.get_vocabulary()):
             embedding_matrix[i] = fasttext_model.get_word_vector(word=word)
         del fasttext_model
 
         x = tf.keras.layers.Embedding(
-            input_dim=self.M + 3,
+            input_dim=len(vectorizer.get_vocabulary()),
             output_dim=self.EMBEDDING_DIM,
+            trainable=False,
+            weights=[embedding_matrix],
+            mask_zero=True,
             input_length=self.MAX_LENGTH,
         )(x)
         x = tf.keras.layers.Dropout(rate=0.25)(x)
@@ -112,23 +114,20 @@ class RNN:
         # RNN layers
         for n in range(self.NUM_LAYERS):
             if n != self.NUM_LAYERS - 1:
-                x = tf.keras.layers.GRU(
-                    units=self.GRU_UNITS,
-                    name=f"rnn_cell_{n}",
-                    return_sequences=True,
-                    dropout=0.2,
-                )(x)
+                x = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(units=self.GRU_UNITS,
+                                                name=f"bigru_cell_{n}",
+                                                return_sequences=True,
+                                                dropout=0.2))(x)
             else:
-                x = tf.keras.layers.GRU(
-                    units=self.GRU_UNITS, name=f"rnn_cell_{n}", dropout=0.2
-                )(x)
+                x = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(
+                                                units=self.GRU_UNITS,
+                                                name=f"bigru_cell_{n}",
+                                                dropout=0.2))(x)
 
         x = tf.keras.layers.Dropout(rate=0.5)(x)
-        o = tf.keras.layers.Dense(units=1, activation="sigmoid", name="lr")(
-            x
-        )  # binary classification
+        o = tf.keras.layers.Dense(units=1, activation="sigmoid", name="lr")(x)  # binary classification
 
-        return tf.keras.models.Model(inputs=inputs, outputs=o, name="gru_rnn")
+        return tf.keras.models.Model(inputs=inputs, outputs=o, name="bigru_rnn")
 
     def _plot_loss(self, epochs: list, train_loss: list, dev_loss: list) -> None:
         plt.plot(epochs, train_loss, color="r", label="Training Set")

@@ -1,12 +1,14 @@
 import time
+import fasttext
+import numpy as np
 import tensorflow as tf
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from keras.preprocessing import sequence
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
+VOCABULARY_PATH: str = "aclImdb/imdb.vocab"
 DEVELOPMENT: bool = True
 TESTING: bool = True
 TRAIN_SIZES: list = [500, 1000, 3000, 5000, 10000, 15000, 20000, 25000]
@@ -16,49 +18,117 @@ class RNN:
     # Hyperparameters
     # Vocabulary
     N: int = 400  # Number of most common words to ignore
-    M: int = 627  # Words to use in vocabulary
+    K: int = 88500  # Number of least common words to ignore
+    M: int = 0
 
-    EMBEDDING_DIM: int = 80
-    LSTM_UNITS: int = 200
-    EPOCHS: int = 5
+    MAX_LENGTH: int = 250
+    EMBEDDING_DIM: int = 64
+    NUM_LAYERS: int = 1
+    GRU_UNITS: int = 64
+    EPOCHS: int = 10
     BATCHES: int = 32
 
     def __init__(self):
         # Import dataset
-        (self.X_train, self.y_train), (X_test_imdb, y_test_imdb) = tf.keras.datasets.imdb.load_data(skip_top=self.N, num_words=self.M)
+        (X_train_index, self.y_train), (
+            X_test_index,
+            y_test_imdb,
+        ) = tf.keras.datasets.imdb.load_data()
 
-        # Pad the train and test lists
-        max_length = 400
-        self.X_train = sequence.pad_sequences(self.X_train, maxlen=max_length)
-        X_test_imdb = sequence.pad_sequences(X_test_imdb, maxlen=max_length)
+        word_index = tf.keras.datasets.imdb.get_word_index()  # dict {word : index}
+        index_to_word = dict(
+            (i + 3, word) for (word, i) in word_index.items()
+        )  # dict {index : word}
+        # Add keywords
+        index_to_word[0] = "[pad]"
+        index_to_word[1] = "[bos]"
+        index_to_word[2] = "[oov]"
+        self.X_train = np.array(
+            [" ".join([index_to_word[idx] for idx in text]) for text in X_train_index]
+        )  # get string from indices
+        X_test_string = np.array(
+            [" ".join([index_to_word[idx] for idx in text]) for text in X_test_index]
+        )  # get string from indices
 
         # Split test data to dev and test datasets
         self.X_dev, self.X_test, self.y_dev, self.y_test = train_test_split(
-            X_test_imdb, y_test_imdb, test_size=6250, random_state=42
+            X_test_string, y_test_imdb, test_size=6250, random_state=42
         )
 
-        # Create RNN model
-        self.rnn = tf.keras.models.Sequential()
-        self.rnn.add(
-            tf.keras.layers.Embedding(
-                input_dim=self.M + 3,
-                output_dim=self.EMBEDDING_DIM,
-                input_length=max_length,
-            )
+        self.rnn = self.create_rnn()
+        self.rnn.compile(loss="binary_crossentropy", optimizer="adam")
+        print(self.rnn.summary())
+
+    def vectorizer_layer(self) -> object:
+        """
+        Creates and returns the vectorizer layer
+        used in the RNN model to convert string reviews
+        to vectors of integers.
+        """
+        # Process our vocabulary
+        vocabulary = pd.read_fwf(
+            VOCABULARY_PATH, skiprows=self.N, skipfooter=self.K, names=["vocab"]
         )
-        self.rnn.add(tf.keras.layers.Dropout(0.1))
-        self.rnn.add(
-            tf.keras.layers.LSTM(
-                units=self.LSTM_UNITS,
-                activation="tanh",
+        self.M = vocabulary.size
+
+        # Create vectorizer
+        with tf.device("/CPU:0"):
+            vectorizer = tf.keras.layers.TextVectorization(
+                vocabulary=vocabulary.vocab,
+                output_mode="int",
+                name="vector_text",
+                output_sequence_length=self.MAX_LENGTH,
             )
-        )
-        self.rnn.add(tf.keras.layers.Dropout(0.3))
-        self.rnn.add(
-            tf.keras.layers.Dense(units=1, activation="sigmoid")
+
+        return vectorizer
+
+    def create_rnn(self) -> object:
+        """
+        Creates the RNN model.
+        """
+        # Input layer
+        inputs = tf.keras.layers.Input(
+            shape=(1,), dtype=tf.string, name="txt_input"
+        )  # [string reviews]
+
+        # Vectorizer layer
+        vectorizer = self.vectorizer_layer()
+        x = vectorizer(inputs)
+
+        # Embedding layer
+        fasttext_model = fasttext.load_model("cc.en.300.bin")
+        embedding_matrix = np.zeros(shape=(len(vectorizer.get_vocabulary()), 300))
+        for i, word in enumerate(vectorizer.get_vocabulary()):
+            embedding_matrix[i] = fasttext_model.get_word_vector(word=word)
+        del fasttext_model
+
+        x = tf.keras.layers.Embedding(
+            input_dim=self.M + 3,
+            output_dim=self.EMBEDDING_DIM,
+            input_length=self.MAX_LENGTH,
+        )(x)
+        x = tf.keras.layers.Dropout(rate=0.25)(x)
+
+        # RNN layers
+        for n in range(self.NUM_LAYERS):
+            if n != self.NUM_LAYERS - 1:
+                x = tf.keras.layers.GRU(
+                    units=self.GRU_UNITS,
+                    name=f"rnn_cell_{n}",
+                    return_sequences=True,
+                    dropout=0.2,
+                )(x)
+            else:
+                x = tf.keras.layers.GRU(
+                    units=self.GRU_UNITS, name=f"rnn_cell_{n}", dropout=0.2
+                )(x)
+
+        x = tf.keras.layers.Dropout(rate=0.5)(x)
+        o = tf.keras.layers.Dense(units=1, activation="sigmoid", name="lr")(
+            x
         )  # binary classification
 
-        self.rnn.compile(loss="binary_crossentropy", optimizer="adam")
+        return tf.keras.models.Model(inputs=inputs, outputs=o, name="gru_rnn")
 
     def _plot_loss(self, epochs: list, train_loss: list, dev_loss: list) -> None:
         plt.plot(epochs, train_loss, color="r", label="Training Set")
@@ -100,6 +170,7 @@ def _print_table(score: str, results: list[list]) -> None:
     print(table)
     print("\n")
 
+
 def _plot_learning_curve(
     train_sizes: list[int],
     train: list[float],
@@ -118,9 +189,11 @@ def _plot_learning_curve(
     plt.tight_layout()
     plt.show()
 
+
 def development() -> None:
     classifier = RNN()
     classifier.fit(classifier.X_train, classifier.y_train, verbose=1)
+
 
 def evaluate_classifier() -> None:
     """
@@ -233,6 +306,7 @@ def evaluate_classifier() -> None:
         c1="b",
         c2="r",
     )
+
 
 def main():
     if DEVELOPMENT:

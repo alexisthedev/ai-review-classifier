@@ -9,6 +9,8 @@
 1. Download a Python version greather than 3.6
 2. Clone the repository
 3. `cd ai-review-classifier`
+4. Download the [Large Movie Review Dataset](https://ai.stanford.edu/~amaas/data/sentiment/).
+5. Make sure to have extracted the **aclImdb** folder in the directory. Only the *imdb.vocab* file is needed.
 
 ### Make sure to have installed
 

@@ -30,10 +30,7 @@ class RNN:
 
     def __init__(self):
         # Import dataset
-        (X_train_index, self.y_train), (
-            X_test_index,
-            y_test_imdb,
-        ) = tf.keras.datasets.imdb.load_data()
+        (X_train_index, self.y_train), (X_test_index,y_test_imdb) = tf.keras.datasets.imdb.load_data()
 
         word_index = tf.keras.datasets.imdb.get_word_index()  # dict {word : index}
         index_to_word = dict(
